@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { ParticleBackground } from "../components/particles";
 import { DashboardHeader } from "../components/dashboardHeader";
 import { ResultsPanel } from "../components/resultsPanel";
+import { RiskSignalsPanel } from "../components/riskSignalsPanel";
+import { AccuracyFlowChart } from "../components/accuracyFlowChart";
+import { AnalyticsCharts } from "../components/analyticsCharts";
 import { TransactionForm } from "../components/transactionForm";
 import { initialPrediction, themeColors } from "../components/theme";
 import { Prediction, ThemeType } from "../components/types";
@@ -120,10 +123,10 @@ export default function Home() {
     <>
       <ParticleBackground />
 
-      <main className="relative z-10 mx-auto min-h-screen w-[min(1100px,92vw)] py-8 pb-16">
+      <main className="relative z-10 mx-auto min-h-screen w-[min(1180px,94vw)] py-8 pb-20">
         <DashboardHeader theme={theme} onThemeChange={saveTheme} />
 
-        <section className="grid gap-6 md:grid-cols-[1.15fr_0.85fr]">
+        <section className="grid items-stretch gap-6 xl:grid-cols-[1.02fr_0.98fr]">
           <TransactionForm
             theme={theme}
             amount={amount}
@@ -148,7 +151,17 @@ export default function Home() {
             chipStyle={chipStyle}
             resultVersion={resultVersion}
             error={error}
+            amount={amount}
+            country={country}
+            deviceType={deviceType}
+            merchantCategory={merchantCategory}
           />
+        </section>
+
+        <section className="mt-6 grid gap-6">
+          <RiskSignalsPanel theme={theme} prediction={prediction} resultVersion={resultVersion} />
+          <AccuracyFlowChart theme={theme} prediction={prediction} resultVersion={resultVersion} />
+          <AnalyticsCharts theme={theme} prediction={prediction} resultVersion={resultVersion} />
         </section>
       </main>
     </>

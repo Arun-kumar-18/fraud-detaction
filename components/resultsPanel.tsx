@@ -1,6 +1,6 @@
 "use client";
 
-import { appearDelay, themeColors } from "./theme";
+import { themeColors } from "./theme";
 import { Prediction, ThemeType } from "./types";
 import { RingMeter } from "./ringMeter";
 
@@ -11,10 +11,26 @@ interface ResultsPanelProps {
   chipStyle?: React.CSSProperties;
   resultVersion: number;
   error: string | null;
+  amount: string;
+  country: string;
+  deviceType: string;
+  merchantCategory: string;
 }
 
-export function ResultsPanel({ theme, prediction, chipClass, chipStyle, resultVersion, error }: ResultsPanelProps) {
-  const verdictLabel = prediction.is_fraud ? "Fraud" : "Legit";
+export function ResultsPanel({
+  theme,
+  prediction,
+  chipClass,
+  chipStyle,
+  resultVersion,
+  error,
+  amount,
+  country,
+  deviceType,
+  merchantCategory,
+}: ResultsPanelProps) {
+  const verdictLabel =
+    prediction.risk_level === "High" ? "Fraud Detected" : prediction.risk_level === "Medium" ? "Needs Review" : "Legit";
   const confidenceLabel = `${prediction.confidence}%`;
   const riskColor =
     prediction.risk_level === "High"
@@ -22,259 +38,233 @@ export function ResultsPanel({ theme, prediction, chipClass, chipStyle, resultVe
       : prediction.risk_level === "Medium"
         ? "#ea580c"
         : themeColors[theme].accent;
-  const verdictColor = riskColor;
-  const verdictTextColor = prediction.is_fraud ? "#dc2626" : riskColor;
+  const verdictTextColor = prediction.risk_level === "High" ? "#dc2626" : riskColor;
 
-  const signalIcon = (signal: string): string => {
-    const lower = signal.toLowerCase();
-    if (lower.includes("amount") || lower.includes("velocity")) return "📈";
-    if (lower.includes("device") || lower.includes("fingerprint")) return "🧬";
-    if (lower.includes("country") || lower.includes("geo") || lower.includes("cross")) return "🌍";
-    if (lower.includes("network") || lower.includes("graph") || lower.includes("neighbor")) return "🕸️";
-    return "⚠️";
+  const prettifyValue = (value: string): string => {
+    if (!value) return "—";
+    return value.replace(/[_-]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
-  const signalType = (
-    signal: string,
-  ): { label: string; tone: string; bg: string; surface: string; borderStyle: "solid" | "dashed"; stripe: string } => {
-    const lower = signal.toLowerCase();
-    if (lower.includes("amount") || lower.includes("velocity")) {
-      return {
-        label: "Behavior",
-        tone: "#f59e0b",
-        bg: "#f59e0b1A",
-        surface: "linear-gradient(140deg, rgba(245,158,11,0.13) 0%, rgba(245,158,11,0.04) 100%)",
-        borderStyle: "solid",
-        stripe: "#f59e0b",
-      };
-    }
-    if (lower.includes("device") || lower.includes("fingerprint")) {
-      return {
-        label: "Device",
-        tone: "#8b5cf6",
-        bg: "#8b5cf61A",
-        surface: "linear-gradient(140deg, rgba(139,92,246,0.13) 0%, rgba(139,92,246,0.04) 100%)",
-        borderStyle: "dashed",
-        stripe: "#8b5cf6",
-      };
-    }
-    if (lower.includes("country") || lower.includes("geo") || lower.includes("cross")) {
-      return {
-        label: "Geo",
-        tone: "#0ea5e9",
-        bg: "#0ea5e91A",
-        surface: "linear-gradient(140deg, rgba(14,165,233,0.13) 0%, rgba(14,165,233,0.04) 100%)",
-        borderStyle: "solid",
-        stripe: "#0ea5e9",
-      };
-    }
-    if (lower.includes("network") || lower.includes("graph") || lower.includes("neighbor")) {
-      return {
-        label: "Network",
-        tone: "#ef4444",
-        bg: "#ef44441A",
-        surface: "linear-gradient(140deg, rgba(239,68,68,0.13) 0%, rgba(239,68,68,0.04) 100%)",
-        borderStyle: "dashed",
-        stripe: "#ef4444",
-      };
-    }
-    return {
-      label: "Risk",
-      tone: themeColors[theme].accent,
-      bg: themeColors[theme].accent + "1A",
-      surface: `linear-gradient(140deg, ${themeColors[theme].accent}1F 0%, ${themeColors[theme].accent}08 100%)`,
-      borderStyle: "solid",
-      stripe: themeColors[theme].accent,
-    };
-  };
+  const detailItems = [
+    { label: "Amount", value: amount ? `₹${Number(amount).toLocaleString()}` : "—" },
+    { label: "Country", value: prettifyValue(country) },
+    { label: "Device", value: prettifyValue(deviceType) },
+    { label: "Merchant", value: prettifyValue(merchantCategory) },
+  ];
+
+  const metricItems = [
+    { label: "Confidence", value: confidenceLabel, tone: themeColors[theme].isDark ? "#e2e8f0" : "#0f172a" },
+    { label: "Risk Level", value: prediction.risk_level, tone: riskColor },
+    {
+      label: "Inference",
+      value: `${prediction.inference_ms} ms`,
+      tone: themeColors[theme].isDark ? "#e2e8f0" : "#0f172a",
+    },
+    { label: "Status", value: verdictLabel, tone: riskColor },
+  ];
+
+  const resultSummaryTitle =
+    prediction.risk_level === "High"
+      ? "High Fraud Confidence"
+      : prediction.risk_level === "Medium"
+        ? "Review Recommended Confidence"
+        : "Low-Risk Legit Confidence";
+
+  const resultSummaryText =
+    prediction.risk_level === "High"
+      ? "The final output strongly indicates fraudulent activity. This transaction should be blocked or reviewed immediately."
+      : prediction.risk_level === "Medium"
+        ? "The final output shows suspicious behavior and should stay in manual review before approval."
+        : "The final output indicates a stable low-risk legitimate transaction with good confidence.";
+
+  const resultBadges = [`Verdict: ${verdictLabel}`, `Risk: ${prediction.risk_level}`, `Confidence: ${confidenceLabel}`];
 
   return (
-    <div key={resultVersion} className="grid gap-5">
-      <article
-        className="overflow-hidden rounded-2xl border shadow-2xl"
-        style={{
-          background: themeColors[theme].isDark
-            ? "linear-gradient(135deg, rgba(15,23,42,0.82) 0%, rgba(30,41,59,0.64) 100%)"
-            : "linear-gradient(145deg, rgba(255,255,255,0.94) 0%, rgba(241,245,249,0.97) 100%)",
-          borderColor: themeColors[theme].accent + "40",
-          boxShadow: `0 18px 42px ${themeColors[theme].accent}1F`,
-          animation: "slideUpIn 500ms ease forwards",
-        }}
-      >
-        <div className="border-b px-6 py-5" style={{ borderColor: themeColors[theme].accent + "30" }}>
-          <div className="flex items-center justify-between gap-4">
-            <div>
+    <article
+      key={resultVersion}
+      className="relative flex h-full flex-col overflow-hidden rounded-[28px] border shadow-2xl backdrop-blur-sm"
+      style={{
+        background: themeColors[theme].isDark
+          ? "linear-gradient(135deg, rgba(15,23,42,0.86) 0%, rgba(30,41,59,0.7) 100%)"
+          : "linear-gradient(145deg, rgba(255,255,255,0.96) 0%, rgba(241,245,249,0.98) 100%)",
+        borderColor: themeColors[theme].accent + "40",
+        boxShadow: `0 22px 52px ${themeColors[theme].accent}1F`,
+        animation: "slideUpIn 500ms ease forwards",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full blur-3xl"
+        style={{ background: themeColors[theme].accent + "18" }}
+      />
+
+      <div className="border-b px-6 py-5" style={{ borderColor: themeColors[theme].accent + "30" }}>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
               <p
                 className="text-[0.64rem] font-bold uppercase tracking-[0.14em]"
                 style={{ color: themeColors[theme].accent + "B3" }}
               >
                 Analysis Verdict
               </p>
-              <h3
-                className="mt-1 font-[var(--font-heading),Bahnschrift,sans-serif] text-4xl font-extrabold tracking-[-0.03em]"
-                style={{ color: verdictTextColor }}
+              <span
+                className="rounded-full border px-2.5 py-1 text-[0.55rem] font-black uppercase tracking-[0.12em]"
+                style={{
+                  borderColor: themeColors[theme].accent + "40",
+                  color: themeColors[theme].accent,
+                  background: themeColors[theme].accent + "12",
+                }}
               >
-                {verdictLabel}
-              </h3>
+                Live Profile Scan
+              </span>
             </div>
-            <span
-              className="rounded-full border px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.13em]"
-              style={{ borderColor: verdictColor + "55", color: verdictColor, background: verdictColor + "14" }}
+            <h3
+              className="mt-1 font-[var(--font-heading),Bahnschrift,sans-serif] text-4xl font-extrabold tracking-[-0.03em]"
+              style={{ color: verdictTextColor }}
             >
-              {prediction.is_fraud ? "Fraud Detected" : "Cleared"}
-            </span>
-          </div>
-        </div>
-
-        <div className="space-y-4 px-6 py-5">
-          <div className="flex items-center justify-between gap-4">
-            <RingMeter value={prediction.confidence} level={prediction.risk_level} theme={theme} />
-            <div className={chipClass} style={chipStyle}>
-              {prediction.label}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div
-              className="rounded-lg border px-3 py-2"
-              style={{ borderColor: themeColors[theme].accent + "30", background: themeColors[theme].accent + "08" }}
-            >
-              <p
-                className="text-[0.6rem] font-bold uppercase tracking-[0.12em]"
-                style={{ color: themeColors[theme].accent + "B3" }}
-              >
-                Confidence
-              </p>
-              <p
-                className="mt-1 text-lg font-extrabold"
-                style={{ color: themeColors[theme].isDark ? "#e2e8f0" : "#0f172a" }}
-              >
-                {confidenceLabel}
-              </p>
-            </div>
-            <div
-              className="rounded-lg border px-3 py-2"
-              style={{ borderColor: themeColors[theme].accent + "30", background: themeColors[theme].accent + "08" }}
-            >
-              <p
-                className="text-[0.6rem] font-bold uppercase tracking-[0.12em]"
-                style={{ color: themeColors[theme].accent + "B3" }}
-              >
-                Risk Level
-              </p>
-              <p className="mt-1 text-lg font-extrabold" style={{ color: verdictColor }}>
-                {prediction.risk_level}
-              </p>
-            </div>
-            <div
-              className="rounded-lg border px-3 py-2"
-              style={{ borderColor: themeColors[theme].accent + "30", background: themeColors[theme].accent + "08" }}
-            >
-              <p
-                className="text-[0.6rem] font-bold uppercase tracking-[0.12em]"
-                style={{ color: themeColors[theme].accent + "B3" }}
-              >
-                Inference
-              </p>
-              <p
-                className="mt-1 text-lg font-extrabold"
-                style={{ color: themeColors[theme].isDark ? "#e2e8f0" : "#0f172a" }}
-              >
-                {prediction.inference_ms} ms
-              </p>
-            </div>
-          </div>
-
-          {error ? (
-            <p
-              className="rounded-lg px-3 py-2 text-sm font-semibold"
-              style={{
-                background: themeColors[theme].isDark ? "#bf050515" : "#bf05050a",
-                borderColor: "#bf050540",
-                border: "1px solid",
-                color: "#bf0505",
-              }}
-            >
-              {error}
+              {verdictLabel}
+            </h3>
+            <p className="mt-1 text-sm" style={{ color: themeColors[theme].isDark ? "#94a3b8" : "#64748b" }}>
+              Summary of the live fraud decision for this transaction.
             </p>
-          ) : null}
+          </div>
+          <span
+            className="rounded-full border px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.13em]"
+            style={{ borderColor: riskColor + "55", color: riskColor, background: riskColor + "14" }}
+          >
+            {verdictLabel}
+          </span>
         </div>
-      </article>
+      </div>
 
-      <article
-        className="overflow-hidden rounded-2xl border shadow-2xl"
-        style={{
-          background: themeColors[theme].isDark
-            ? "linear-gradient(135deg, rgba(15,23,42,0.8) 0%, rgba(30,41,59,0.6) 100%)"
-            : "linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(248,250,252,0.98) 100%)",
-          borderColor: themeColors[theme].accent + "40",
-          boxShadow: `0 16px 38px ${themeColors[theme].accent}1A`,
-          animation: "slideUpIn 500ms ease forwards",
-          animationDelay: appearDelay(2),
-        }}
-      >
-        <div className="border-b px-6 py-4" style={{ borderColor: themeColors[theme].accent + "30" }}>
-          <p className="text-xs font-bold uppercase tracking-[0.1em]" style={{ color: themeColors[theme].accent }}>
-            Detected Risk Signals
-          </p>
-        </div>
-
-        <div className="grid gap-2.5 px-6 py-5">
-          {prediction.signals.length > 0 ? (
-            prediction.signals.map((signal, index) => {
-              const type = signalType(signal);
-
-              return (
+      <div className="flex flex-1 flex-col  space-y-4 px-6 py-5">
+        <p className="mt-1 text-sm" style={{ color: themeColors[theme].isDark ? "#e2e8f0" : "#0f172a" }}>
+          Summary
+        </p>
+        <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+          <div
+            className="rounded-xl border px-4 py-4"
+            style={{ borderColor: themeColors[theme].accent + "30", background: themeColors[theme].accent + "08" }}
+          >
+            <p
+              className="text-[0.62rem] font-bold uppercase tracking-[0.12em]"
+              style={{ color: themeColors[theme].accent + "B3" }}
+            >
+              Transaction Details
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              {detailItems.map((item) => (
                 <div
-                  key={signal}
-                  className="flex items-center gap-3 rounded-lg border px-3 py-2.5"
+                  key={item.label}
+                  className="rounded-lg border px-3 py-2.5"
                   style={{
-                    background: type.surface,
-                    borderColor: type.tone + "66",
-                    borderStyle: type.borderStyle,
-                    boxShadow: `inset 3px 0 0 ${type.stripe}`,
-                    animation: "slideUpIn 500ms ease forwards",
-                    animationDelay: appearDelay(index + 3),
+                    borderColor: themeColors[theme].accent + "24",
+                    background: themeColors[theme].isDark ? "rgba(15,23,42,0.34)" : "rgba(255,255,255,0.72)",
                   }}
                 >
-                  <span
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-sm"
-                    style={{ background: type.bg, color: type.tone }}
+                  <p
+                    className="text-[0.58rem] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: themeColors[theme].accent + "A6" }}
                   >
-                    {signalIcon(signal)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className="truncate text-sm font-semibold"
-                      style={{ color: themeColors[theme].isDark ? "#e2e8f0" : "#111827" }}
-                    >
-                      {signal}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <p
-                        className="text-[0.62rem] font-bold uppercase tracking-[0.12em]"
-                        style={{ color: themeColors[theme].isDark ? "#94a3b8" : "#64748b" }}
-                      >
-                        Model Trigger
-                      </p>
-                      <span
-                        className="rounded-full border px-2 py-0.5 text-[0.55rem] font-black uppercase tracking-[0.11em]"
-                        style={{ color: type.tone, borderColor: type.tone + "80", background: type.bg }}
-                      >
-                        {type.label}
-                      </span>
-                    </div>
-                  </div>
+                    {item.label}
+                  </p>
+                  <p
+                    className="mt-1 text-[0.7rem] font-extrabold"
+                    style={{ color: themeColors[theme].isDark ? "#e2e8f0" : "#0f172a" }}
+                  >
+                    {item.value}
+                  </p>
                 </div>
-              );
-            })
-          ) : (
-            <span className="text-xs" style={{ color: themeColors[theme].isDark ? "#94a3b8" : "#64748b" }}>
-              No signals detected
-            </span>
-          )}
+              ))}
+            </div>
+          </div>
+
+          <div
+            className="rounded-xl border px-4 py-4"
+            style={{ borderColor: themeColors[theme].accent + "30", background: themeColors[theme].accent + "08" }}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <RingMeter value={prediction.confidence} level={prediction.risk_level} theme={theme} />
+              <div className={chipClass} style={chipStyle}>
+                {verdictLabel}
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              {metricItems.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-lg border px-3 py-2.5"
+                  style={{
+                    borderColor: themeColors[theme].accent + "24",
+                    background: themeColors[theme].isDark ? "rgba(15,23,42,0.34)" : "rgba(255,255,255,0.72)",
+                  }}
+                >
+                  <p
+                    className="text-[0.50rem] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: themeColors[theme].accent + "A6" }}
+                  >
+                    {item.label}
+                  </p>
+                  <p className="mt-1 text-[0.7rem] font-extrabold" style={{ color: item.tone }}>
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </article>
-    </div>
+
+        <div
+          className="rounded-lg border px-3 py-3"
+          style={{ borderColor: themeColors[theme].accent + "30", background: themeColors[theme].accent + "08" }}
+        >
+          <p
+            className="text-[0.6rem] font-bold uppercase tracking-[0.12em]"
+            style={{ color: themeColors[theme].accent + "B3" }}
+          >
+            Result Accuracy Level
+          </p>
+          <h4
+            className="mt-1 text-base font-extrabold"
+            style={{ color: themeColors[theme].isDark ? "#f8fafc" : "#0f172a" }}
+          >
+            {resultSummaryTitle}
+          </h4>
+          <p className="mt-2 text-sm leading-6" style={{ color: themeColors[theme].isDark ? "#94a3b8" : "#64748b" }}>
+            {resultSummaryText}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {resultBadges.map((item) => (
+              <span
+                key={item}
+                className="rounded-full border px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em]"
+                style={{
+                  borderColor: themeColors[theme].accent + "55",
+                  color: themeColors[theme].isDark ? "#e2e8f0" : "#0f172a",
+                  background: themeColors[theme].accent + "14",
+                }}
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {error ? (
+          <p
+            className="rounded-lg px-3 py-2 text-sm font-semibold"
+            style={{
+              background: themeColors[theme].isDark ? "#bf050515" : "#bf05050a",
+              borderColor: "#bf050540",
+              border: "1px solid",
+              color: "#bf0505",
+            }}
+          >
+            {error}
+          </p>
+        ) : null}
+      </div>
+    </article>
   );
 }

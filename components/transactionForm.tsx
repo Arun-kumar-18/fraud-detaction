@@ -43,13 +43,18 @@ export function TransactionForm({
 
   return (
     <article
-      className="overflow-hidden rounded-2xl border shadow-2xl"
+      className="relative flex h-full flex-col overflow-hidden rounded-[28px] border shadow-2xl backdrop-blur-sm"
       style={{
         background: panelBackground,
         borderColor: themeColors[theme].accent + "40",
-        boxShadow: `0 18px 42px ${themeColors[theme].accent}1F`,
+        boxShadow: `0 20px 48px ${themeColors[theme].accent}1F`,
       }}
     >
+      <div
+        className="pointer-events-none absolute -left-8 top-0 h-24 w-24 rounded-full blur-3xl"
+        style={{ background: themeColors[theme].accent + "18" }}
+      />
+
       <div
         className="border-b px-6 py-5"
         style={{
@@ -59,17 +64,37 @@ export function TransactionForm({
           borderColor: themeColors[theme].accent + "30",
         }}
       >
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 text-2xl">📈</span>
-          <div>
-            <h2
-              className="font-[var(--font-heading),Bahnschrift,sans-serif] text-2xl font-bold tracking-[-0.02em]"
-              style={{ color: themeColors[theme].isDark ? "white" : "#0f172a" }}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 text-2xl">📈</span>
+            <div>
+              <h2
+                className="font-[var(--font-heading),Bahnschrift,sans-serif] text-2xl font-bold tracking-[-0.02em]"
+                style={{ color: themeColors[theme].isDark ? "white" : "#0f172a" }}
+              >
+                Transaction Details
+              </h2>
+              <p className="mt-1 text-sm" style={{ color: themeColors[theme].accent + "B3" }}>
+                Analyze individual entry points against the global fraud graph.
+              </p>
+            </div>
+          </div>
+
+          <div
+            className="rounded-2xl border px-3 py-2 text-center"
+            style={{
+              borderColor: themeColors[theme].accent + "30",
+              background: themeColors[theme].accent + "10",
+            }}
+          >
+            <p
+              className="text-[0.55rem] font-bold uppercase tracking-[0.12em]"
+              style={{ color: themeColors[theme].accent + "B3" }}
             >
-              Transaction Audit
-            </h2>
-            <p className="mt-1 text-sm" style={{ color: themeColors[theme].accent + "B3" }}>
-              Analyze individual entry points against the global risk graph.
+              Intake
+            </p>
+            <p className="mt-1 text-xs" style={{ color: themeColors[theme].isDark ? "#e2e8f0" : "#0f172a" }}>
+              Live Ready
             </p>
           </div>
         </div>
@@ -80,9 +105,9 @@ export function TransactionForm({
         style={{ borderColor: themeColors[theme].accent + "26" }}
       >
         {[
-          { label: "Model", value: "Graph Ensemble" },
-          { label: "Latency", value: "~40 ms" },
-          { label: "Status", value: "Primed" },
+          { label: "Model", value: "Adaptive Graph" },
+          { label: "Latency", value: "~15 ms" },
+          { label: "Status", value: "Profile-aware" },
         ].map((item) => (
           <div
             key={item.label}
@@ -106,7 +131,7 @@ export function TransactionForm({
       </div>
 
       <form
-        className="grid gap-4 px-6 py-6"
+        className="flex flex-1 flex-col gap-4 px-6 py-6"
         action="#"
         method="get"
         onSubmit={(event) => {
@@ -278,19 +303,21 @@ export function TransactionForm({
           )}
         </button>
 
-        <p
-          className="text-center text-[0.7rem] font-medium"
-          style={{ color: themeColors[theme].isDark ? "#94a3b8" : "#64748b" }}
-        >
-          Tip: high amount + unfamiliar device + cross-border route usually increases risk score.
-        </p>
+        <div className="mt-auto space-y-2 pt-1">
+          <p
+            className="text-center text-[0.7rem] font-medium"
+            style={{ color: themeColors[theme].isDark ? "#94a3b8" : "#64748b" }}
+          >
+            Tip: high amount + unfamiliar device + cross-border route usually increases risk score.
+          </p>
 
-        <p
-          className={`min-h-5 text-center text-sm font-semibold text-red-400 transition-opacity ${formError ? "opacity-100" : "opacity-0"}`}
-          aria-live="polite"
-        >
-          {formError ?? ""}
-        </p>
+          <p
+            className={`min-h-5 text-center text-sm font-semibold text-red-400 transition-opacity ${formError ? "opacity-100" : "opacity-0"}`}
+            aria-live="polite"
+          >
+            {formError ?? ""}
+          </p>
+        </div>
       </form>
     </article>
   );

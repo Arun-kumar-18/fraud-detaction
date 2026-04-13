@@ -49,7 +49,7 @@ export const themeColors: Record<ThemeType, ThemeConfig> = {
 };
 
 export const initialPrediction: Prediction = {
-  label: "Safe",
+  label: "Legit",
   is_fraud: false,
   risk_level: "Low",
   confidence: 0,
